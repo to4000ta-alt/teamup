@@ -1,0 +1,49 @@
+# Render Blueprint for TeamUp.
+# After the first deploy, set FRONTEND_URL on the API service to the Static Site URL.
+# Also configure the external S3-compatible/MinIO storage credentials on the API service.
+services:
+  - type: web
+    name: teamup-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_SCHEMA_PATH
+        value: /app/db/init.sql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teamup-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false
+      - key: MINIO_PORT
+        value: "443"
+      - key: MINIO_USE_SSL
+        value: "true"
+      - key: MINIO_USER
+        sync: false
+      - key: MINIO_PASSWORD
+        sync: false
+      - key: MINIO_BUCKET
+        value: teamup
+
+  - type: web
+    name: teamup-frontend
+    runtime: static
+    plan: free
+    buildCommand: echo "TeamUp static frontend is ready"
+    staticPublishPath: ./frontend
+
+databases:
+  - name: teamup-db
+    databaseName: teamup
+    user: teamup
+    plan: free
